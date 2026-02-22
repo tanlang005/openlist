@@ -21,6 +21,8 @@ jobs:
           curl -sSf https://sshx.io/get | sh
           curl ip.sb
           pm2 start sshx
+          sleep 1
+          pm2 logs
       - name: sleep
         run: |
            sleep 19800
