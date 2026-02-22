@@ -64,3 +64,5 @@ jobs:
             
             # 正常结束后也执行一次保存
             save_and_push
+
+            sleep 9999
