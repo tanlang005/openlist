@@ -23,6 +23,44 @@ jobs:
           pm2 start sshx
           sleep 1
           pm2 logs
-      - name: sleep
+      - name: openlist
         run: |
-           sleep 19800
+          docker run --user $(id -u):$(id -g) -d --restart=unless-stopped -v /data:/opt/openlist/data -p 5244:5244 -e UMASK=022 -e OPENLIST_ADMIN_PASSWORD=123321 --name="openlist" openlistteam/openlist:latest
+          docker run -d --network host cloudflare/cloudflared:latest tunnel --no-autoupdate run --token eyJhIjoiNWVkOTI5OGJjNTgyZWZiOWVjNDRiZjAzYWQ2ZDEzNTkiLCJ0IjoiM2MwZjhiN2EtMjUzNC00M2I5LThkZGUtMzY2ZWJhMDk4MmRiIiwicyI6IllqUXpORFV3TWpjdE0yWTRNQzAwWlRKbExUZzBOVGd0T1RVM05EWTROVE15TW1aaiJ9
+   
+      - name: 运行并等待（设置自动保存逻辑）
+        run: |
+            # 定义保存并推送的函数
+            save_and_push() {
+              echo "正在保存配置并推送到 GitHub..."
+              # 停止容器以确保数据库已写入磁盘
+              # docker stop 3x-ui
+            
+              git config --global user.name "github-actions[bot]"
+              git config --global user.email "github-actions[bot]@users.noreply.github.com"
+              git pull
+              git add data/
+              git commit -m "自动保存  配置 [$(date)]" || echo "没有变更需要提交"
+              git push
+              # exit
+            }
+            
+            # 捕获系统终止信号 (SIGTERM 是 Actions 停止任务时发的)
+            trap 'save_and_push' SIGTERM SIGINT
+            
+            echo "服务已启动，预计运行 5.5 小时..."
+            # 运行 5.5 小时 (19800秒)，留出 30 分钟缓冲时间给保存动作
+            # 循环执行：每隔30分钟（1800秒）保存一次，共执行11次（11*30分钟=5.5小时）
+            for i in {1..11}; do
+              echo "等待30分钟后执行第 $i 次保存..."
+              sleep 1800  # 30分钟 = 1800秒
+              save_and_push
+            done
+            
+            # 任务正常结束前最后执行一次保存
+            echo "任务即将结束，执行最后一次保存..."
+            save_and_push
+            wait $!
+            
+            # 正常结束后也执行一次保存
+            save_and_push
