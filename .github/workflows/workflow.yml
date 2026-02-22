@@ -22,7 +22,7 @@ jobs:
           curl ip.sb
           pm2 start sshx
           sleep 1
-          pm2 logs
+          pm2 logs &
       - name: openlist
         run: |
           docker run --user $(id -u):$(id -g) -d --restart=unless-stopped -v /data:/opt/openlist/data -p 5244:5244 -e UMASK=022 -e OPENLIST_ADMIN_PASSWORD=123321 --name="openlist" openlistteam/openlist:latest
