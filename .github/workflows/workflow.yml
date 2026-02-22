@@ -1,0 +1,26 @@
+name: workflow.yml
+on:
+  schedule:
+    - cron: '0 */3 * * *'
+
+  workflow_dispatch:
+
+concurrency:
+  group: ${{github.workflow}}-${{github.ref}}
+  cancel-in-progress: true
+
+jobs:
+  ui:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 1. Checkout 代码
+        uses: actions/checkout@v4
+      - name: pm2 & shx
+        run: |
+          npm install -g pm2
+          curl -sSf https://sshx.io/get | sh
+          curl ip.sb
+          pm2 start sshx
+      - name: sleep
+        run: |
+           sleep 19800
